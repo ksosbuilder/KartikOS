@@ -1,5 +1,9 @@
-// Small utility barrel. Add shadcn's cn() helper here in the shadcn step.
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-export function cn(...classes: Array<string | undefined | null | false>): string {
-  return classes.filter(Boolean).join(" ");
+// cn() merges Tailwind class strings, with later classes overriding earlier ones
+// (so e.g. cn("text-sm", condition && "text-lg") picks the larger size when the
+// condition is true). Use everywhere a className is computed conditionally.
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }

@@ -1,11 +1,20 @@
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { FlatCompat } from "@eslint/eslintrc";
 import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
 import prettier from "eslint-config-prettier";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// eslint-config-next still ships a legacy `.eslintrc`-style config. FlatCompat
+// wraps it so we can mix it into the flat-config array alongside Prettier.
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
 const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
   // Prettier must come last so it can disable conflicting formatting rules.
   prettier,
   globalIgnores([

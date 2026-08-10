@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KartikOS
 
-## Getting Started
+A personal life-OS dashboard — todos, finance, habits, journaling, anything else that's useful to live next to. Built with Next.js 15, Supabase, Tailwind v4, and shadcn/ui. Deployed on Vercel.
 
-First, run the development server:
+This is a single-user app. See [`CLAUDE.md`](./CLAUDE.md) for the full stack and conventions used by Claude Code.
+
+## Quickstart
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local      # fill in Supabase creds
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command             | What it does                               |
+| ------------------- | ------------------------------------------ |
+| `pnpm dev`          | Local dev server (port 3000)               |
+| `pnpm build`        | Production build                           |
+| `pnpm start`        | Run the production build locally           |
+| `pnpm lint`         | ESLint                                     |
+| `pnpm typecheck`    | `tsc --noEmit`                             |
+| `pnpm test`         | Vitest (watch by default; `-- --run` once) |
+| `pnpm test:e2e`     | Playwright (auto-starts `pnpm dev`)        |
+| `pnpm format`       | Prettier write                             |
+| `pnpm format:check` | Prettier check                             |
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
+Pushes to `main` are deployed automatically via Vercel. To set up a fresh Vercel project:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Import the repo at <https://vercel.com/new>.
+2. Vercel auto-detects Next.js; the included `vercel.json` pins the install/build commands, output dir, and region (`iad1`).
+3. Set the environment variables from `.env.example` in the Vercel project settings (Production + Preview).
+4. Optional: connect a custom domain under Settings → Domains.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+CI runs in `.github/workflows/ci.yml` on every PR and push to `main`.

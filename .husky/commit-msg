@@ -1,0 +1,6 @@
+# Husky hooks run in a fresh shell — they don't inherit the parent shell's
+# env. Source nvm so `pnpm` (installed under it) is on PATH.
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+pnpm exec commitlint --edit "$1"

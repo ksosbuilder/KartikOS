@@ -1,0 +1,14 @@
+# Files Vercel doesn't need in the deploy upload. Listed in addition to .gitignore
+# (which Vercel already respects).
+
+# Project docs kept outside the repo's source tree
+/Kartik OS - PRD draft 2.pdf
+
+# Test artifacts
+/coverage/
+/playwright-report/
+/test-results/
+/vitest-report/
+
+# Local claude settings
+/.claude/settings.local.json

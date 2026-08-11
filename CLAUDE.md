@@ -40,17 +40,20 @@ The `@/*` path alias maps to the repo root.
 
 ## Commands
 
-| Command             | What it does                               |
-| ------------------- | ------------------------------------------ |
-| `pnpm dev`          | Local dev server (port 3000)               |
-| `pnpm build`        | Production build                           |
-| `pnpm start`        | Run the production build locally           |
-| `pnpm lint`         | ESLint                                     |
-| `pnpm typecheck`    | `tsc --noEmit`                             |
-| `pnpm test`         | Vitest (watch by default; `-- --run` once) |
-| `pnpm test:e2e`     | Playwright (auto-starts `pnpm dev`)        |
-| `pnpm format`       | Prettier write                             |
-| `pnpm format:check` | Prettier check (used in CI)                |
+| Command             | What it does                                               |
+| ------------------- | ---------------------------------------------------------- |
+| `pnpm dev`          | Local dev server (port 3000)                               |
+| `pnpm build`        | Production build                                           |
+| `pnpm start`        | Run the production build locally                           |
+| `pnpm lint`         | ESLint                                                     |
+| `pnpm typecheck`    | `tsc --noEmit`                                             |
+| `pnpm test`         | Vitest (watch by default; `-- --run` once)                 |
+| `pnpm test:e2e`     | Playwright (auto-starts `pnpm dev`)                        |
+| `pnpm format`       | Prettier write                                             |
+| `pnpm format:check` | Prettier check (used in CI)                                |
+| `pnpm db:up`        | Start the local Supabase stack (`supabase start`)          |
+| `pnpm db:reset`     | Reset local DB: drop, re-apply all migrations, re-run seed |
+| `pnpm db:seed`      | Re-run seed against the local DB (alias for `db:reset`)    |
 
 Always use `pnpm` — there's a workspace lockfile and `pnpm-workspace.yaml`.
 
@@ -63,6 +66,34 @@ Copy `.env.example` to `.env.local` and fill in Supabase values:
 - `SUPABASE_SERVICE_ROLE_KEY` (server-only, optional — never expose to the client)
 
 CI uses placeholder values for build-time type analysis. Real values are injected by Vercel at deploy.
+
+## Local database
+
+Local development uses the Supabase CLI to run a full Supabase stack (Postgres + GoTrue + Storage + Studio) in Docker. The CLI is a dev dependency (`supabase`); the project config lives in `supabase/config.toml`.
+
+```
+supabase/
+  config.toml          # local stack config (committed)
+  migrations/          # versioned SQL migrations (applied in order)
+  seed.sql             # dev-only seed; production guard at the top of the file
+```
+
+**Workflow:**
+
+```bash
+pnpm db:up       # first time + any time the stack is stopped: boots Docker containers
+pnpm db:reset    # nukes the local DB, re-applies all migrations, runs seed.sql
+pnpm db:seed     # re-runs the seed against the running local DB
+```
+
+`supabase/seed.sql` is gated by a top-of-file guard that aborts on the production guard env var or a non-local DB URL. The dev seed creates a fixed `auth.users` row with a placeholder bcrypt hash — that user is for SQL inspection only, not for logging into the app.
+
+**Migrations:**
+
+- Migrations live in `supabase/migrations/` with `<timestamp>_<name>.sql` filenames.
+- Each migration must be idempotent-safe (use `create table …` without `if exists` only on first creation).
+- RLS is enabled on every public schema table. Add an owner policy keyed on `user_id = auth.uid()` whenever you add a table.
+- Never edit a committed migration — add a new one.
 
 ## Conventions
 

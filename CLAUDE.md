@@ -40,20 +40,19 @@ The `@/*` path alias maps to the repo root.
 
 ## Commands
 
-| Command             | What it does                                               |
-| ------------------- | ---------------------------------------------------------- |
-| `pnpm dev`          | Local dev server (port 3000)                               |
-| `pnpm build`        | Production build                                           |
-| `pnpm start`        | Run the production build locally                           |
-| `pnpm lint`         | ESLint                                                     |
-| `pnpm typecheck`    | `tsc --noEmit`                                             |
-| `pnpm test`         | Vitest (watch by default; `-- --run` once)                 |
-| `pnpm test:e2e`     | Playwright (auto-starts `pnpm dev`)                        |
-| `pnpm format`       | Prettier write                                             |
-| `pnpm format:check` | Prettier check (used in CI)                                |
-| `pnpm db:up`        | Start the local Supabase stack (`supabase start`)          |
-| `pnpm db:reset`     | Reset local DB: drop, re-apply all migrations, re-run seed |
-| `pnpm db:seed`      | Re-run seed against the local DB (alias for `db:reset`)    |
+| Command             | What it does                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| `pnpm dev`          | Local dev server (port 3000)                                                           |
+| `pnpm build`        | Production build                                                                       |
+| `pnpm start`        | Run the production build locally                                                       |
+| `pnpm lint`         | ESLint                                                                                 |
+| `pnpm typecheck`    | `tsc --noEmit`                                                                         |
+| `pnpm test`         | Vitest (watch by default; `-- --run` once)                                             |
+| `pnpm test:e2e`     | Playwright (auto-starts `pnpm dev`)                                                    |
+| `pnpm format`       | Prettier write                                                                         |
+| `pnpm format:check` | Prettier check (used in CI)                                                            |
+| `pnpm db:up`        | Apply pending migrations to the linked Supabase project (`supabase db push --linked`)  |
+| `pnpm db:reset`     | Reset the linked project: drop, re-apply all migrations (`supabase db reset --linked`) |
 
 Always use `pnpm` — there's a workspace lockfile and `pnpm-workspace.yaml`.
 
@@ -67,26 +66,46 @@ Copy `.env.example` to `.env.local` and fill in Supabase values:
 
 CI uses placeholder values for build-time type analysis. Real values are injected by Vercel at deploy.
 
-## Local database
+## Linked dev project
 
-Local development uses the Supabase CLI to run a full Supabase stack (Postgres + GoTrue + Storage + Studio) in Docker. The CLI is a dev dependency (`supabase`); the project config lives in `supabase/config.toml`.
+There is no local Supabase stack. Development targets a single linked Supabase project
+(Postgres + GoTrue + Storage + Studio + Edge Runtime) accessed over the network. No
+Docker / Colima / Podman is required.
+
+The Supabase CLI is a dev dependency (`supabase`); the project config lives in
+`supabase/config.toml`. The CLI's stored access token (from `supabase login`) and the
+linked project ref (from `supabase link`) authorize the CLI to push migrations and
+inspect schema against the project.
 
 ```
 supabase/
-  config.toml          # local stack config (committed)
+  config.toml          # project config (committed; ports, auth, etc.)
   migrations/          # versioned SQL migrations (applied in order)
   seed.sql             # dev-only seed; production guard at the top of the file
 ```
 
+**One-time setup:**
+
+```bash
+supabase login                                    # opens browser, stores access token
+supabase link --project-ref <ref from dashboard>  # binds the CLI to one project
+```
+
+The project ref is the subdomain in the dashboard URL
+(`https://supabase.com/dashboard/project/<ref>`).
+
 **Workflow:**
 
 ```bash
-pnpm db:up       # first time + any time the stack is stopped: boots Docker containers
-pnpm db:reset    # nukes the local DB, re-applies all migrations, runs seed.sql
-pnpm db:seed     # re-runs the seed against the running local DB
+pnpm db:up       # apply any new migrations from supabase/migrations/ to the linked project
+pnpm db:reset    # destructive: drops the project DB, re-applies all migrations (no seed)
 ```
 
-`supabase/seed.sql` is gated by a top-of-file guard that aborts on the production guard env var or a non-local DB URL. The dev seed creates a fixed `auth.users` row with a placeholder bcrypt hash — that user is for SQL inspection only, not for logging into the app.
+`supabase/seed.sql` is gated by a top-of-file guard that aborts on the production guard
+env var or a non-local DB URL, so it never runs against the linked project. For now
+the linked project starts empty — seed real data by using the app once Phase 2 ships
+pages. If a dev-only seed path is added later, it will live in a separate
+`supabase/seed.dev.sql` gated for `--linked` use only.
 
 **Migrations:**
 

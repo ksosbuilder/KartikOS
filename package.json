@@ -13,9 +13,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "db:up": "supabase start",
-    "db:reset": "supabase db reset",
-    "db:seed": "supabase db reset"
+    "db:up": "supabase db push --linked",
+    "db:reset": "supabase db reset --linked"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
